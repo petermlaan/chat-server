@@ -30,6 +30,10 @@ server.listen(8080, () => {
     console.log('listening on *:8080');
 });
 
+io.on("message", (args) => {
+    console.log("received message", args)
+    io.send("hello from the server")
+})
 
 /*const wss = new WebSocket.Server({ port: 8080 });
 
