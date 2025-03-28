@@ -21,12 +21,25 @@ const io = new Server(server, {
     }
 })
 
+io.use((socket, next) => {
+    const token = socket.handshake.auth.token;
+    console.log("User token: " + token)
+    if (Math.random() > 0.2) {
+        console.log("Valid!")
+        socket.data = token;
+        next();
+    } else {
+        console.log("REJECTED!")
+        next(new Error('Invalid token'));
+    }
+})
+
 io.on('connection', (socket) => {
     console.log('a user connected');
     socket.on('disconnect', () => console.log('user disconnected'))
     socket.on("message", (msg) => {
         console.log("received message: ", msg)
-        io.send("Broadcast: " + msg)
+        io.send(socket.data + ": " + msg)
     })
 })
 
