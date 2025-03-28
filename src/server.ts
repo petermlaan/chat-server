@@ -1,16 +1,17 @@
-import * as fs from "fs"
+import { readFileSync } from "fs"
 import { Server } from "socket.io"
 import express from "express"
 import http from "http"
+import { Msg } from "../../common/interfaces"
 
-interface IConfig {
+interface Config {
     rndspeed: number
 }
 
 console.log("Starting websocket server...")
 
-const buffer = fs.readFileSync("config.json")
-const cfg = JSON.parse(buffer.toString()) as IConfig
+const buffer = readFileSync("config.json")
+const cfg = JSON.parse(buffer.toString()) as Config
 console.log("rndspeed: " + cfg.rndspeed)
 
 const app = express()
@@ -38,11 +39,17 @@ io.on('connection', (socket) => {
     console.log('a user connected');
     socket.on('disconnect', () => console.log('user disconnected'))
     socket.on("message", (msg) => {
+        const packet: Msg  = {
+            user: socket.data,
+            msg: msg as string,
+        }
         console.log("received message: ", msg)
-        io.send(socket.data + ": " + msg)
+        console.log("broadcasting: ", packet)
+        io.send(JSON.stringify(packet))
     })
 })
 
 server.listen(8080, () => {
     console.log('Listening on *:8080')
 })
+
