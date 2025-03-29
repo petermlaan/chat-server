@@ -2,7 +2,7 @@ import { readFileSync } from "fs"
 import { Server } from "socket.io"
 import express from "express"
 import http from "http"
-import { Msg } from "../../common/interfaces"
+import { Msg } from "./interfaces"
 
 interface Config {
     rndspeed: number
@@ -15,14 +15,17 @@ const cfg = JSON.parse(buffer.toString()) as Config
 console.log("rndspeed: " + cfg.rndspeed)
 
 const app = express()
-const server = http.createServer(app)
-const io = new Server(server, {
-    cors: {
-        origin: "http://localhost:3000",
-    }
-})
+const servers: http.Server[] = []
+const roomCount = 3
+for (let i = 0; i < roomCount; i++) {
+    servers.push(http.createServer(app))
+}
+const ios:Server[] = [];
+for (let i = 0; i < roomCount; i++) {
+    ios.push(new Server(servers[i], {cors: {origin: "*"}}))
+}
 
-io.use((socket, next) => {
+ios.forEach(io => io.use((socket, next) => {
     const token = socket.handshake.auth.token;
     console.log("User token: " + token)
     if (Math.random() > 0.2) {
@@ -33,9 +36,9 @@ io.use((socket, next) => {
         console.log("REJECTED!")
         next(new Error('Invalid token'));
     }
-})
+}))
 
-io.on('connection', (socket) => {
+ios.forEach(io => io.on('connection', (socket) => {
     console.log('a user connected');
     socket.on('disconnect', () => console.log('user disconnected'))
     socket.on("message", (msg) => {
@@ -47,9 +50,9 @@ io.on('connection', (socket) => {
         console.log("broadcasting: ", packet)
         io.send(JSON.stringify(packet))
     })
-})
+}))
 
-server.listen(8080, () => {
-    console.log('Listening on *:8080')
-})
+servers.forEach((server, i) => server.listen(8080 + i, () => {
+    console.log("Listening on *:" + (8080 + i))
+}))
 
