@@ -28,8 +28,7 @@ for (let i = 0; i < roomCount; i++) {
 ios.forEach(io => io.use((socket, next) => {
     const token = socket.handshake.auth.token;
     console.log("User token: " + token)
-    if (Math.random() > 0.2) {
-        console.log("Valid!")
+    if (Math.random() > -1) {
         socket.data = token;
         next();
     } else {
@@ -46,7 +45,6 @@ ios.forEach(io => io.on('connection', (socket) => {
             user: socket.data,
             msg: msg as string,
         }
-        console.log("received message: ", msg)
         console.log("broadcasting: ", packet)
         io.send(JSON.stringify(packet))
     })
