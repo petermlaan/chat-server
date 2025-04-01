@@ -2,12 +2,8 @@ import { readFileSync } from "fs"
 import { Server } from "socket.io"
 import express from "express"
 import http from "http"
-import { Msg } from "./interfaces"
+import { Config, Msg } from "./interfaces"
 import { dbGetChatRooms } from "./db"
-
-interface Config {
-    rndspeed: number
-}
 
 program()
 
@@ -40,14 +36,31 @@ async function program() {
 
     ios.forEach(io => io.on('connection', (socket) => {
         console.log('a user connected')
-        socket.on('disconnect', () => console.log('user disconnected'))
+        const packet: Msg = {
+            type: 1,
+            user: socket.data,
+            msg: "",
+        }
+        io.send(packet)
+
+        socket.on('disconnect', () => {
+            console.log('user disconnected')
+            const packet: Msg = {
+                type: 2,
+                user: socket.data,
+                msg: "",
+            }
+            io.send(packet)
+        })
+
         socket.on("message", (msg) => {
             const packet: Msg = {
+                type: 0,
                 user: socket.data,
                 msg: msg as string,
             }
             console.log("broadcasting: ", packet)
-            io.send(JSON.stringify(packet))
+            io.send(packet)
         })
     }))
 
