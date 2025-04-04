@@ -1,11 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 import { ChatRoom, Msg } from './interfaces';
 
-export async function dbGetChatRooms(): Promise<ChatRoom[]> {
-    const supabase = createClient(
-        process.env.SUPABASE_URL ?? "",
-        process.env.SUPABASE_SERVICE_ROLE_KEY ?? "")
+const supabase = createClient(
+    process.env.SUPABASE_URL ?? "",
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? "")
 
+export async function dbGetChatRooms(): Promise<ChatRoom[]> {
     const { data, error } = await supabase
         .from("cmChatRoom")
         .select("id, name")
@@ -16,14 +16,12 @@ export async function dbGetChatRooms(): Promise<ChatRoom[]> {
     }
     if (!data)
         return []
-    return data
+    const chatRooms = data as ChatRoom[]
+    chatRooms.forEach(r => r.messages = [])
+    return chatRooms
 }
 
 export async function dbGetMessages(chatRoomId: number, maxCount: number): Promise<Msg[]> {
-    const supabase = createClient(
-        process.env.SUPABASE_URL ?? "",
-        process.env.SUPABASE_SERVICE_ROLE_KEY ?? "")
-
     const { data, error } = await supabase
         .from("cmMessage")
         .select("type, user, msg, chatroom_id")
@@ -37,19 +35,23 @@ export async function dbGetMessages(chatRoomId: number, maxCount: number): Promi
     }
     if (!data)
         return []
-    return data;
+    const messages = data as Msg[]
+    messages.forEach(m => m.save = false)
+    return messages
 }
 
 export async function dbInsertMessages(messages: Msg[]) {
-    const supabase = createClient(
-        process.env.SUPABASE_URL ?? "",
-        process.env.SUPABASE_SERVICE_ROLE_KEY ?? "")
+    // Filter out messages that should not be saved
+    const toSave = messages.filter(m => m.save === true)
+
+    // Remove unwanted properties
+    const dbmessages = toSave.map(({ save, ...rest }) => rest)
 
     const { error } = await supabase
-        .from('cmMessage')
-        .insert(messages)
+        .from("cmMessage")
+        .insert(dbmessages)
     if (error) {
-        console.error("dbGetMessages", error)
+        console.error("dbInsertMessages", error)
         throw error
     }
 }
