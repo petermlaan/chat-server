@@ -1,8 +1,7 @@
 export interface Msg {
-    chatroom_id: number;
-    type: number; // 0 - message, 1 - user joined, 2  - user left
+    room_id: number;
     user: string;
-    msg: string;
+    message: string;
     save: boolean; // should we save this msg to the DB?
 }
 

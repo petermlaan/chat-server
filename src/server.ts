@@ -32,11 +32,11 @@ async function program() {
         })
         socket.on("message", (data) => {
             console.log("message: ", data)
-            const msgin = data as Msg
-            msgin.save = true
-            io.to("" + msgin.chatroom_id).emit("message", [msgin])
-            const messages = rooms[socket.data.roomId].messages
-            messages.push(msgin)
+            const msg = data as Msg
+            msg.save = true
+            io.to("" + msg.room_id).emit("message", [msg])
+            const messages = rooms[msg.room_id].messages
+            messages.push(msg)
             if (messages.length > 2 * msgBuffSize) {
                 const pruned = messages.splice(0, messages!.length - msgBuffSize)
                 console.log(pruned.length + " messages pruned")
@@ -46,16 +46,15 @@ async function program() {
         socket.on("join", (data) => {
             console.log("join: ", data)
             const msg = data as Msg
-            socket.join("" + msg.chatroom_id)
-            socket.send(rooms[socket.data.roomId].messages)
+            socket.join("" + msg.room_id)
+            socket.send(rooms[msg.room_id].messages)
             const packet: Msg = {
-                chatroom_id: msg.chatroom_id,
-                type: 3,
+                room_id: msg.room_id,
                 user: socket.data.user,
-                msg: "",
+                message: "",
                 save: true,
             }
-            io.to("" + msg.chatroom_id).emit("joined", packet)
+            io.to("" + msg.room_id).emit("joined", packet)
         })
     })
 
