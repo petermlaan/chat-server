@@ -14,5 +14,4 @@ export interface ChatRoom {
 
 export interface SocketData {
     user: string;
-    roomId: number;
 }
