@@ -1,11 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
-import { ChatRoom, Msg } from './interfaces';
+import { Room, Msg } from './interfaces';
 
 const supabase = createClient(
     process.env.SUPABASE_URL ?? "",
     process.env.SUPABASE_SERVICE_ROLE_KEY ?? "")
 
-export async function dbGetChatRooms(): Promise<ChatRoom[]> {
+export async function dbGetChatRooms(): Promise<Room[]> {
     const { data, error } = await supabase
         .from("cmChatRoom")
         .select("id, name")
@@ -16,7 +16,7 @@ export async function dbGetChatRooms(): Promise<ChatRoom[]> {
     }
     if (!data)
         return []
-    const chatRooms = data as ChatRoom[]
+    const chatRooms = data as Room[]
     chatRooms.forEach(r => r.messages = [])
     return chatRooms
 }
@@ -44,11 +44,14 @@ export async function dbGetMessages(chatRoomId: number, maxCount: number): Promi
 
 export async function dbInsertMessages(messages: Msg[]) {
     // Filter out messages that should not be saved
-    const toSave = messages.filter(m => m.save === true)
+    const toSave = messages.filter(m => m.save)
+    // Mark them as saved
+    toSave.forEach(m => m.save = false)
 
-    // Remove unwanted properties
+    // Remove properties not in the db
     const dbmessages = toSave.map(({ save, ...rest }) => rest)
-
+    console.log("Messages inserted: " + dbmessages.length);
+    
     const { error } = await supabase
         .from("cm_message")
         .insert(dbmessages)
