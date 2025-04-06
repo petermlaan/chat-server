@@ -23,9 +23,9 @@ export async function dbGetChatRooms(): Promise<ChatRoom[]> {
 
 export async function dbGetMessages(chatRoomId: number, maxCount: number): Promise<Msg[]> {
     const { data, error } = await supabase
-        .from("cmMessage")
-        .select("user, msg, chatroom_id")
-        .eq("chatroom_id", chatRoomId)
+        .from("cm_message")
+        .select("user, message, room_id")
+        .eq("room_id", chatRoomId)
         .order("id", { ascending: false })
         .limit(maxCount)
         .order("id", { ascending: true })
@@ -38,7 +38,6 @@ export async function dbGetMessages(chatRoomId: number, maxCount: number): Promi
     const messages = data as Msg[]
     messages.forEach(m => {
         m.save = false
-        m.type = 0
     })
     return messages.reverse()
 }
@@ -48,10 +47,10 @@ export async function dbInsertMessages(messages: Msg[]) {
     const toSave = messages.filter(m => m.save === true)
 
     // Remove unwanted properties
-    const dbmessages = toSave.map(({ save, type, ...rest }) => rest)
+    const dbmessages = toSave.map(({ save, ...rest }) => rest)
 
     const { error } = await supabase
-        .from("cmMessage")
+        .from("cm_message")
         .insert(dbmessages)
     if (error) {
         console.error("dbInsertMessages", error)
