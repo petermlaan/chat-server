@@ -5,10 +5,11 @@ export interface Msg {
     save: boolean; // should we save this msg to the DB?
 }
 
-export interface ChatRoom {
+export interface Room {
     id: number;
     name: string;
     messages: Msg[];
+    savedToDB: boolean;
 }
 
 export interface SocketData {
