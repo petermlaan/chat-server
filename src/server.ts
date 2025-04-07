@@ -68,7 +68,6 @@ async function program() {
             console.log("leave: ", data)
             const msg = data as Msg
             socket.leave("" + msg.room_id)
-            socket.send(rooms[msg.room_id].messages)
             const packet: Msg = {
                 room_id: msg.room_id,
                 user: socket.data.user,
