@@ -60,9 +60,22 @@ async function program() {
                 room_id: msg.room_id,
                 user: socket.data.user,
                 message: "",
-                save: true,
+                save: false,
             }
             io.to("" + msg.room_id).emit("joined", packet)
+        })
+        socket.on("leave", (data) => {
+            console.log("leave: ", data)
+            const msg = data as Msg
+            socket.leave("" + msg.room_id)
+            socket.send(rooms[msg.room_id].messages)
+            const packet: Msg = {
+                room_id: msg.room_id,
+                user: socket.data.user,
+                message: "",
+                save: false,
+            }
+            io.to("" + msg.room_id).emit("left", packet)
         })
     })
 
