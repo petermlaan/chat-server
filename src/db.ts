@@ -37,7 +37,8 @@ export async function dbGetMessages(chatRoomId: number, maxCount: number): Promi
         return []
     const messages = data as Msg[]
     messages.forEach(m => {
-        m.save = false
+        m.save = false,
+        m.type = 0
     })
     return messages.reverse()
 }
@@ -45,12 +46,9 @@ export async function dbGetMessages(chatRoomId: number, maxCount: number): Promi
 export async function dbInsertMessages(messages: Msg[]) {
     // Filter out messages that should not be saved
     const toSave = messages.filter(m => m.save)
-    // Mark them as saved
-    toSave.forEach(m => m.save = false)
 
     // Remove properties not in the db
-    const dbmessages = toSave.map(({ save, ...rest }) => rest)
-    console.log("Messages inserted: " + dbmessages.length);
+    const dbmessages = toSave.map(({ save, type, ...rest }) => rest)
     
     const { error } = await supabase
         .from("cm_message")
@@ -59,5 +57,9 @@ export async function dbInsertMessages(messages: Msg[]) {
         console.error("dbInsertMessages", error)
         throw error
     }
+    console.log("Messages inserted: " + dbmessages.length);
+
+    // Mark them as saved
+    toSave.forEach(m => m.save = false)
 }
 
