@@ -19,7 +19,7 @@ async function program() {
     rooms.forEach((r, i) => r.messages = messagesarr[i])
 
     // Set up save to db interval
-    setInterval(() => rooms.forEach(r => 
+    setInterval(() => rooms.forEach(r =>
         onSaveMessages(r)), saveToDBInterval * 1000)
 
     // Create the websocket
@@ -50,6 +50,19 @@ async function program() {
                 room.savedToDB = true
                 const pruned = messages.splice(0, messages!.length - msgBuffSize)
                 console.log("Messages pruned: " + pruned.length)
+            }
+        })
+        socket.on("pm", (data) => {
+            console.log("pm: ", data)
+            const msg = data as Msg
+            const toUser = msg.message.substring(1, (msg.message.indexOf(" ")))
+            if (!toUser)
+                return
+            for (const [_, s] of io.of("/").sockets) {
+                if (s.data.user === toUser) {
+                    s.emit("pm", [msg])
+                    break
+                }
             }
         })
         socket.on("join", (data) => {
