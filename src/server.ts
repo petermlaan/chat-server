@@ -40,6 +40,7 @@ async function program() {
         socket.on("message", (data) => {
             const msg = data as Msg
             msg.save = true
+            msg.type = 0
             io.to("" + msg.room_id).emit("message", [msg])
             const room = rooms[msg.room_id]
             const messages = room.messages
@@ -59,6 +60,7 @@ async function program() {
             const packet: Msg = {
                 room_id: msg.room_id,
                 user: socket.data.user,
+                type: 2,
                 message: "",
                 save: false,
             }
@@ -71,6 +73,7 @@ async function program() {
             const packet: Msg = {
                 room_id: msg.room_id,
                 user: socket.data.user,
+                type: 2,
                 message: "",
                 save: false,
             }
@@ -85,11 +88,11 @@ async function program() {
 }
 
 function onSaveMessages(room: Room) {
-    console.log("onSaveMessages")
+    console.log("onSaveMessages: " + room.id)
     if (room.savedToDB) {
         room.savedToDB = false
         return
     }
-    console.log("onSaveMessages saving...")
+    console.log("onSaveMessages saving: " + room.id)
     dbInsertMessages(room.messages)
 }
