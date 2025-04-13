@@ -34,8 +34,21 @@ async function program() {
     })
     io.on('connection', socket => {
         console.log('a user connected')
-        socket.on('disconnect', () => {
-            console.log('user disconnected')
+        socket.on('disconnecting', () => {
+            console.log('user disconnecting...')
+            socket.rooms.forEach(r => {
+                // Don't send left msg to the user room
+                if (rooms.find(room => "" + room.id === r)) {
+                    const packet: Msg = {
+                        room_id: +r,
+                        user: socket.data.user,
+                        type: 2,
+                        message: "",
+                        save: false,
+                    }
+                    io.to(r).emit("left", packet)
+                }
+            })
         })
         socket.on("message", (data) => {
             const msg = data as Msg
@@ -48,12 +61,10 @@ async function program() {
             if (messages.length > 2 * msgBuffSize) {
                 dbInsertMessages(messages)
                 room.savedToDB = true
-                const pruned = messages.splice(0, messages!.length - msgBuffSize)
-                console.log("Messages pruned: " + pruned.length)
+                messages.splice(0, messages!.length - msgBuffSize)
             }
         })
         socket.on("pm", (data) => {
-            console.log("pm: ", data)
             const msg = data as Msg
             const toUser = msg.message.substring(1, (msg.message.indexOf(" ")))
             if (!toUser)
@@ -101,11 +112,11 @@ async function program() {
 }
 
 function onSaveMessages(room: Room) {
-    console.log("onSaveMessages: " + room.id)
     if (room.savedToDB) {
+        // Don't save messages if the overflow check 
+        // saved them since the last timer tick
         room.savedToDB = false
         return
     }
-    console.log("onSaveMessages saving: " + room.id)
     dbInsertMessages(room.messages)
 }
