@@ -35,31 +35,33 @@ export async function dbGetMessages(chatRoomId: number, maxCount: number): Promi
     }
     if (!data)
         return []
-    const messages = data as Msg[]
-    messages.forEach(m => {
+    const msgs = data as Msg[]
+    msgs.forEach(m => {
         m.save = false,
         m.type = 0
     })
-    return messages.reverse()
+    return msgs.reverse()
 }
 
-export async function dbInsertMessages(messages: Msg[]) {
+export async function dbInsertMessages(msgs: Msg[]) {
     // Filter out messages that should not be saved
-    const toSave = messages.filter(m => m.save)
-
+    const toSave = msgs.filter(m => m.save)
+    if (toSave.length === 0)
+        return
+    
     // Remove properties not in the db
-    const dbmessages = toSave.map(({ save, type, ...rest }) => rest)
+    const dbMsgs = toSave.map(({ save, type, ...rest }) => rest)
     
     const { error } = await supabase
         .from("cm_message")
-        .insert(dbmessages)
+        .insert(dbMsgs)
     if (error) {
         console.error("dbInsertMessages", error)
         throw error
     }
-    console.log("Messages inserted: " + dbmessages.length);
+    console.log("Msg inserted: " + dbMsgs.length);
 
-    // Mark them as saved
+    // Mark msg:s as saved
     toSave.forEach(m => m.save = false)
 }
 
