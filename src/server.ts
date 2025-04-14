@@ -10,6 +10,10 @@ const saveToDBInterval = 120 // in seconds
 program()
 
 async function program() {
+    function getRoom(roomId: number) {
+        return rooms.find(r => r.id === roomId)
+    }
+
     console.log("Starting websocket server...")
 
     // set up chat rooms and load messages from db
@@ -55,7 +59,11 @@ async function program() {
             msg.save = true
             msg.type = 0
             io.to("" + msg.room_id).emit("message", [msg])
-            const room = rooms[msg.room_id]
+            const room = getRoom(msg.room_id)
+            if (!room) {
+                console.log("Found no room for msg: ", msg)
+                return
+            }
             const messages = room.messages
             messages.push(msg)
             if (messages.length > 2 * msgBuffSize) {
@@ -80,7 +88,12 @@ async function program() {
             console.log("join: ", data)
             const msg = data as Msg
             socket.join("" + msg.room_id)
-            socket.send(rooms[msg.room_id].messages)
+            const room = getRoom(msg.room_id)
+            if (!room) {
+                console.log("Found no room for msg: ", msg)
+                return
+            }
+            socket.send(room.messages)
             const packet: Msg = {
                 room_id: msg.room_id,
                 user: socket.data.user,
@@ -120,3 +133,4 @@ function onSaveMessages(room: Room) {
     }
     dbInsertMessages(room.messages)
 }
+
