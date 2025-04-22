@@ -16,4 +16,6 @@ express
 
 "npm start" to start the server.
 
+Supabase database schema:
+
 ![Supabase DB schema](supabase-db-schema.png)
